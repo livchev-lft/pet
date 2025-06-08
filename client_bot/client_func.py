@@ -1,3 +1,5 @@
+from zoneinfo import available_timezones
+
 import aiohttp
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, Message
 from markdown_it.rules_core import inline
@@ -7,7 +9,10 @@ async def is_user_registered(telegram_id: int) -> bool:
     async with aiohttp.ClientSession() as session:
         check_us = f"http://localhost:8000/clients/by-telegram/{telegram_id}"
         async with session.get(check_us) as resp:
-            return resp.status != 404
+            if resp.status == 200:
+                return True
+            else:
+                return False
 
 async def client_registration(message: Message) -> None:
     keyboard = ReplyKeyboardMarkup(
@@ -27,6 +32,7 @@ async def my_cars(telegram_id, message: Message) -> None:
     async with aiohttp.ClientSession() as session:
         check_cars = f"http://localhost:8000/clients/mycars/{telegram_id}"
         async with session.get(check_cars) as resp:
+            print(resp.status)
             if resp.status == 200:
                 data = await resp.json()
                 cars = data.get("cars", [])
@@ -42,5 +48,7 @@ async def my_cars(telegram_id, message: Message) -> None:
             else:
                 await message.answer("ошибка в функции my_cars")
 
-def add_car(telegram_id: int, message: Message) -> None:
-    pass
+async def check_cars(telegram_id: int, message: Message) -> None:
+    async with aiohttp.ClientSession() as session:
+        available_cars = f"http://localhost:8000/clients/mycars/{telegram_id}"
+        print(available_cars)

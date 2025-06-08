@@ -1,9 +1,9 @@
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 from aiogram.fsm.storage.memory import MemoryStorage
-from client_bot.client_kb import client_start_menu
+from client_bot.client_kb import client_start_menu, client_add_car
 from client_bot.client_fsm import Registration, AddCar, CreateApp
-from client_bot.client_func import add_car, my_cars, is_user_registered, client_registration
+from client_bot.client_func import check_cars, my_cars, is_user_registered, client_registration
 import aiohttp
 from datetime import datetime
 from aiogram.fsm.context import FSMContext
@@ -78,7 +78,7 @@ async def handle_name(message: Message, state: FSMContext):
             ) as response:
                 print(response.status)
                 if response.status == 200:
-                    await message.answer("успех")
+                    await message.answer("успех", reply_markup=client_start_menu)
                 else:
                     error = await response.text()
                     print("Ответ сервера:", error)
@@ -93,10 +93,10 @@ async def handle_my_cars(message: Message):
     print('тачки')
     telegram_id = message.from_user.id
     registered = await is_user_registered(telegram_id)
-    if registered is True:
+    if registered == True:
         await my_cars(telegram_id, message)
     else:
-        add_car(telegram_id, message)
+        await client_registration(message)
 
 @router.callback_query(F.data == 'add_car')
 async def add_car_callback_query(callback_query: CallbackQuery, state: FSMContext):
@@ -171,8 +171,9 @@ async def car_year(message: Message, state: FSMContext):
         await state.clear()
 
 @router.message(F.text.in_(["➕ Новая заявка"]))
-async def new_app(message: Message):
-
+async def new_app(message: Message, state: FSMContext):
+    await state.set_state(CreateApp.SELECT_CAR)
+    await check_cars(telegram_id=message.from_user.id, message=message)
 
 async def start_bot():
     dp.include_router(router)

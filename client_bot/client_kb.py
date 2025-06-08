@@ -14,3 +14,4 @@ client_add_car = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="добавить автомобиль", callback_data="add_car")],
     ]
 )
+
